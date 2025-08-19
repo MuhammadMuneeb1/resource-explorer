@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Resource Explorer – Rick & Morty
 
-## Getting Started
+Build: Next.js App Router + TypeScript + Tailwind + React Query
 
-First, run the development server:
+What it does
+- Lists Rick & Morty characters with pagination
+- URL-synced search, filter (status, gender), sort (name), and favorites-only view
+- Detail page with image, metadata, local note, and favorite toggle
+- Favorites persisted in localStorage, theme toggle (light/dark)
+- Fast UX with React Query caching, abortable requests, loading skeletons, and error retry
 
+Getting started
+1. Install dependencies
+```bash
+npm install
+```
+2. Run dev server
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+3. Build
+```bash
+npm run build && npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tech decisions
+- App Router with server detail route keeps bundle small and allows streaming where useful
+- React Query handles caching, background refetch, and cancellation via fetch AbortSignal
+- URL is source of truth using next/navigation hooks; state is derived from search params
+- Tailwind for small, focused UI components; no heavy UI kit
+- Favorites and notes use localStorage for persistence with simple providers/hooks
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Tricky bits addressed
+- URL-sync for q/status/gender/sort/page/fav, shareable and reload-safe
+- Abort on change: React Query supplies AbortSignal to fetchers
+- Empty states, skeletons, and retry button on errors
+- Back/forward keeps list state; pagination and filters live in URL
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+What’s next (if more time)
+- Virtualized list (react-window) for 1000+ items
+- E2E smoke test (Playwright) for search → view detail → favorite flow
+- Accessibility pass: roving tabindex for cards, better focus management on route change
+- Persist notes/favorites to IndexedDB for larger data
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Project structure
+```
+src/
+  app/               Next.js app routes
+  components/        UI, list, detail, notes, favorites
+  hooks/             small reusable hooks
+  lib/               API types and fetchers
+  providers/         Theme, React Query, Favorites
+```

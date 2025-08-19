@@ -36,11 +36,6 @@ Tricky bits addressed
 - Empty states, skeletons, and retry button on errors
 - Back/forward keeps list state; pagination and filters live in URL
 
-What’s next (if more time)
-- Virtualized list (react-window) for 1000+ items
-- E2E smoke test (Playwright) for search → view detail → favorite flow
-- Accessibility pass: roving tabindex for cards, better focus management on route change
-- Persist notes/favorites to IndexedDB for larger data
 
 Project structure
 ```

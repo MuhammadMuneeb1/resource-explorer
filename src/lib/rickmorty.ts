@@ -63,4 +63,13 @@ export async function fetchCharacterById(id: number, signal?: AbortSignal): Prom
   return res.json();
 }
 
+export async function fetchCharactersByIds(ids: number[], signal?: AbortSignal): Promise<Character[]> {
+  if (!ids.length) return [];
+  const url = `https://rickandmortyapi.com/api/character/${ids.join(",")}`;
+  const res = await fetch(url, { signal, cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load favorites`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [data];
+}
+
 

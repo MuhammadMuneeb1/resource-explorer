@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchCharacters, Character } from "@/lib/rickmorty";
+import { fetchCharacters, fetchCharactersByIds, Character } from "@/lib/rickmorty";
 import { CharacterCard } from "@/components/CharacterCard";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/Pagination";
@@ -36,25 +36,29 @@ export function CharacterList({
   onlyFavorites: boolean;
   favoritesSet: Set<number>;
 }) {
-  const queryKey = useMemo(
+  const listQueryKey = useMemo(
     () => ["characters", { page, name, status, gender, sort }],
     [page, name, status, gender, sort]
   );
+  const favoritesQueryKey = useMemo(() => ["characters-fav", Array.from(favoritesSet).sort()], [favoritesSet]);
 
-  const query = useAbortableQuery<{ info: { count: number; pages: number }; results: Character[] }, Error>(
-    queryKey,
+  const listQuery = useAbortableQuery<{ info: { count: number; pages: number }; results: Character[] }, Error>(
+    listQueryKey,
     async (signal) => fetchCharacters({ page, name, status, gender, sort }, signal)
   );
+  const favQuery = useAbortableQuery<Character[], Error>(
+    favoritesQueryKey,
+    async (signal) => fetchCharactersByIds(Array.from(favoritesSet), signal)
+  );
 
-  const isEmpty = query.isSuccess && query.data.results.length === 0;
+  const isEmpty = (!onlyFavorites && listQuery.isSuccess && listQuery.data.results.length === 0) || (onlyFavorites && favQuery.isSuccess && favQuery.data.length === 0);
 
   const results = useMemo(() => {
-    if (!query.data) return [] as Character[];
-    if (!onlyFavorites) return query.data.results;
-    return query.data.results.filter(c => favoritesSet.has(c.id));
-  }, [query.data, onlyFavorites, favoritesSet]);
+    if (onlyFavorites) return favQuery.data ?? [];
+    return listQuery.data?.results ?? [];
+  }, [onlyFavorites, favQuery.data, listQuery.data]);
 
-  if (query.isLoading) {
+  if ((!onlyFavorites && listQuery.isLoading) || (onlyFavorites && favQuery.isLoading)) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 9 }).map((_, i) => (
@@ -64,13 +68,13 @@ export function CharacterList({
     );
   }
 
-  if (query.isError) {
-    const message = (query.error as Error)?.message || "";
+  if ((!onlyFavorites && listQuery.isError) || (onlyFavorites && favQuery.isError)) {
+    const message = ((onlyFavorites ? favQuery.error : listQuery.error) as Error)?.message || "";
     return (
       <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-6 text-center">
         <p className="mb-2">Failed to load characters.</p>
         {message && <p className="text-sm text-neutral-500 mb-4">{message}</p>}
-        <Button onClick={() => query.refetch()}>
+        <Button onClick={() => (onlyFavorites ? favQuery.refetch() : listQuery.refetch())}>
           Retry
         </Button>
       </div>
@@ -92,7 +96,7 @@ export function CharacterList({
           <CharacterCard key={c.id} character={c} priority={idx === 0} />
         ))}
       </div>
-      {!onlyFavorites && <Pagination totalPages={query.data?.info.pages ?? 1} />}
+      {!onlyFavorites && <Pagination totalPages={listQuery.data?.info.pages ?? 1} />}
     </div>
   );
 }
